@@ -37,8 +37,8 @@ gunzip GRCh38.p14.genome.fa.gz
 wget https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_49/gencode.v49.primary_assembly.basic.annotation.gtf.gz
 gunzip gencode.v49.primary_assembly.basic.annotation.gtf.gz
 # Ensembl GFF
-wget https://ftp.ensembl.org/pub/release-115/gff3/homo_sapiens/Homo_sapiens.GRCh38.115.gff3.gz
-gunzip Homo_sapiens.GRCh38.115.gff3.gz
+wget https://ftp.ensembl.org/pub/release-114/gff3/homo_sapiens/Homo_sapiens.GRCh38.114.gff3.gz
+gunzip Homo_sapiens.GRCh38.114.gff3.gz
 # Clone Illumina SpliceAI repository
 git clone git@github.com:/Illumina/SpliceAI.git
 ```
