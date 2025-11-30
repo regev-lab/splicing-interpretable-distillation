@@ -4,6 +4,18 @@
 
 ## Installation
 
+### Git LFS
+
+This repository uses Git Large File Storage (LFS) to store large datasets.  
+Make sure Git LFS is installed *before* cloning, or run `git lfs pull` after cloning to fetch the tracked files:
+
+```bash
+git lfs install
+git clone git:github.com:/regev-lab/splicing-interpretable-distillation.git
+# or if already cloned
+git lfs pull
+```
+
 ### Python Dependencies
 
 Install required Python packages:
