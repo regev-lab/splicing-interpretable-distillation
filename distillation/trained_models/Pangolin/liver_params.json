@@ -1,0 +1,93 @@
+{
+  "amp": true,
+  "asha_brackets": 1,
+  "asha_grace_period": 10,
+  "asha_max_epochs": 200,
+  "asha_reduction_factor": 3,
+  "batch_size": 8,
+  "batch_size_iter": 256,
+  "checkpoint_at_end": true,
+  "checkpoint_freq": 1,
+  "checkpoints_to_keep": null,
+  "conv_activation": "relu",
+  "conv_activity_l1_penalty": 6.719060002822092e-09,
+  "conv_activity_l2_penalty": 0,
+  "conv_batch_norm": true,
+  "conv_kernel_l1_penalty": 0,
+  "conv_kernel_l2_penalty": 0,
+  "data_type": "sequence",
+  "downstream_sequence": "",
+  "expanded_structure": false,
+  "experiment_name": "20251119_Pangolin_Liver_Distillation_ES7_Random70nt_Exon_NoCryptic",
+  "experiment_seed": 42,
+  "feature_activation": "relu",
+  "feature_hidden_num": 4,
+  "feature_hidden_size": 10.0,
+  "feature_nn_activity_l1_penalty": 1.142121160330905e-09,
+  "feature_nn_activity_l2_penalty": 0,
+  "feature_nn_bases_l1_penalty": 3.6948877044053784e-06,
+  "feature_nn_bases_l2_penalty": 0,
+  "feature_norm": "none",
+  "init_lr": 0.0005488561244852947,
+  "loss": "mse",
+  "loss_positive_imbalance_ratio": null,
+  "lr_decay_factor": 0.01644344284483334,
+  "lr_decay_patience": 9,
+  "metrics": [
+    "mse",
+    "pearson-r"
+  ],
+  "model_architecture": "conv1d_nbm",
+  "num_concurrent": 10,
+  "num_cpus": 16,
+  "num_cpus_per_trial": 1.0,
+  "num_gpus_per_trial": 0.06,
+  "num_trials": 150,
+  "object_store_memory_bytes": 10737418240,
+  "orders": [
+    [
+      1,
+      100,
+      null
+    ]
+  ],
+  "output_activations": [
+    "none"
+  ],
+  "output_size": 1,
+  "padding": "valid",
+  "pooling": null,
+  "pooling_size": 0,
+  "positional_encoding": "hybrid_sine_cosine",
+  "positional_encoding_embed_dim": 12,
+  "positional_encoding_freq_scale": 10000,
+  "positional_encoding_integral_periods": [
+    3
+  ],
+  "positional_encoding_max_len": 1000,
+  "restore": false,
+  "result_dir": "/scratch/sl11412/conv-gams/results",
+  "seed": 117,
+  "sequence_channels": 4,
+  "sequence_column": "random_exon_flanking_25nt",
+  "sequence_kernels": {
+    "kernel0_num": 5,
+    "kernel0_size": 13,
+    "num_types": 1
+  },
+  "structure_channels": 0,
+  "structure_column": null,
+  "structure_kernels": {
+    "num_types": 0
+  },
+  "target_column": "liver",
+  "test_csv": "/home/sl11412/conv-gams/data/spliceai/202509C10_ES7_Random70ntExons_FixedIntrons.Pangolin.MaxEntScan.CrypticHalfCanonical.csv",
+  "time_budget_s": null,
+  "train_csv": "/home/sl11412/conv-gams/data/spliceai/202509C10_ES7_Random70ntExons_FixedIntrons.Pangolin.MaxEntScan.CrypticHalfCanonical.csv",
+  "train_fraction": 0.9,
+  "tuner_hidden_activation": "relu",
+  "tuner_hidden_norm": "none",
+  "tuner_hidden_num": 3,
+  "tuner_hidden_size": 25.0,
+  "upstream_sequence": ""
+}

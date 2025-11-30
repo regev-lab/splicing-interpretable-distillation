@@ -1,0 +1,9 @@
+Model,Type,Score
+Measured PSI,Wildtype,100.0
+Measured PSI,c.13476C>T,50.0
+AlphaGenome,Wildtype,99.417
+AlphaGenome,c.13476C>T,98.6343
+SpliceAI,Wildtype,96.59925
+SpliceAI,c.13476C>T,93.02335
+Pangolin,Wildtype,73.82065951824188
+Pangolin,c.13476C>T,72.41638451814651

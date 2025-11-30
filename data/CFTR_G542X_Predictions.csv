@@ -1,0 +1,9 @@
+Model,Type,Score
+Measured PSI,Wildtype,99.7
+Measured PSI,G542X,99.0
+AlphaGenome,Wildtype,94.3947
+AlphaGenome,G542X,94.157
+SpliceAI,Wildtype,97.54830000000001
+SpliceAI,G542X,85.00645
+Pangolin,Wildtype,60.344673320651054
+Pangolin,G542X,42.1003257855773
