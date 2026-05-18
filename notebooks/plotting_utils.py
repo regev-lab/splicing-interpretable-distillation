@@ -1,10 +1,12 @@
 import matplotlib.pyplot as plt
+from matplotlib.patches import Patch
 import numpy as np
 import pandas as pd
+import scipy
 import seaborn as sns
 
 
-def discretize_variable(values, window, min_val=None, max_val=None, labels=True, include_above_max=False):
+def discretize_variable(values, window, min_val=None, max_val=None, labels=True, label_precision=0, include_above_max=False):
     """
     Discretize a continuous variable into bins.
 
@@ -43,10 +45,10 @@ def discretize_variable(values, window, min_val=None, max_val=None, labels=True,
 
     # Create labels if requested
     if labels:
-        bin_labels = [f"{round(bins[i], 3)}-{round(bins[i+1], 3)}"
+        bin_labels = [f"{round(bins[i], label_precision)}-{round(bins[i+1], label_precision)}"
                      for i in range(len(bins) - 2)]
         if include_above_max:
-            bin_labels.append(f"{round(max_val, 3)}+")
+            bin_labels.append(f"{round(max_val, label_precision)}+")
     else:
         bin_labels = False  # pd.cut will return integers
 
@@ -473,3 +475,540 @@ def plot_compare_two_dfs(
     )
 
     return fig, ax
+
+def plot_calibration(x, y, bins=np.arange(-10, 10, 0.2), ax=None, xlabel=None, ylabel=None, title=None):
+    """
+    Calibration plot: bars show mean actual value per prediction bin.
+
+    Args:
+        y_true: array of true values (0-100 scale)
+        y_pred: array of predicted values (0-100 scale)
+        bins: bin edges for grouping predictions
+    """
+    bins = list(bins)
+    bin_mids = [(bins[i] + bins[i + 1]) / 2 for i in range(len(bins) - 1)]
+
+    means, counts = [], []
+    for i in range(len(bins) - 1):
+        mask = (x >= bins[i]) & (x < bins[i + 1])
+        if i == len(bins) - 2:
+            mask = (x >= bins[i]) & (x <= bins[i + 1])
+        means.append(np.mean(y[mask]) if mask.any() else np.nan)
+        counts.append(mask.sum())
+        
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(3.5, 2.5), dpi=600)
+
+    means = np.array(means)
+    counts = np.array(counts)
+
+    # Perfect calibration reference
+    ax.plot([bins[0], bins[-1]], [bins[0], bins[-1]], "k--", linewidth=1, label="Perfect Calibration", zorder=1)
+
+    sc = ax.scatter(bin_mids, means, 
+                    s=2, 
+                    color="steelblue",
+                    zorder=3, label="Model")
+    ax.plot(bin_mids, means, color="steelblue", linewidth=1.5, zorder=2)
+
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    ax.set_title(title)
+    ax.legend()
+    plt.tight_layout()
+    return fig, ax
+
+def plot_faceted_mfe_analysis(
+    df, predictor_col, target_col, group_col,
+    predictor_label="Predictor", target_label="Target", group_label="Group",
+    target_bins=10, ceiling_count=8, show_sample_counts=False,
+    min_samples=1,
+    title=None, cmap='viridis', custom_palette=None, ylim=None,
+    figsize=None, dpi=600, ncols=None,
+    legend_loc='lower center', legend_ncols=None, legend_bbox_to_anchor=(0.5, -0.15),
+    group_order=None,
+    fontsize_title=12, fontsize_axis_labels=10, fontsize_ytick=9,
+    fontsize_legend=10, fontsize_sample_counts=8
+):
+    """
+    FACETED VERSION with shared legend: Create separate subplot for each target bin.
+    Uses color coding with a shared legend instead of x-tick labels.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Input data
+    predictor_col : str
+        Column name for y-axis (prediction error)
+    target_col : str
+        Column name for binning (MFE)
+    group_col : str
+        Column name for grouping (e.g., structure category)
+    predictor_label : str
+        Y-axis label
+    target_label : str
+        Label for target variable (used in subplot x-labels)
+    group_label : str
+        Label for groups (used in legend title)
+    target_bins : int or array-like
+        Number of bins or bin edges for target variable
+    ceiling_count : int
+        Maximum number of groups to display
+    show_sample_counts : bool
+        Whether to show sample counts above boxes
+    min_samples : int
+        Minimum samples required per bin/group combination
+    title : str, optional
+        Overall figure title
+    cmap : str
+        Colormap name
+    custom_palette : list, optional
+        Custom color palette
+    ylim : tuple, optional
+        Y-axis limits
+    figsize : tuple, optional
+        Figure size (width, height)
+    dpi : int
+        Figure DPI
+    ncols : int, optional
+        Number of columns for subplot grid (default: 4)
+    legend_loc : str
+        Legend location
+    legend_ncols : int, optional
+        Number of legend columns (default: number of groups)
+    legend_bbox_to_anchor : tuple
+        Legend bbox anchor position
+    group_order : list, optional
+        Custom order for groups
+    fontsize_* : int
+        Font sizes for various elements
+
+    Returns
+    -------
+    fig : matplotlib.figure.Figure
+        The generated figure
+    """
+
+    df_plot = df.copy()
+
+    # Bin target variable
+    if isinstance(target_bins, int):
+        df_plot['target_bin'] = pd.cut(df_plot[target_col], bins=target_bins, include_lowest=True)
+    else:
+        df_plot['target_bin'] = pd.cut(df_plot[target_col], bins=target_bins, include_lowest=True)
+
+    # Convert intervals to readable strings
+    def format_interval(interval):
+        if pd.isna(interval):
+            return 'NaN'
+        left = 0 if round(interval.left) == 0 else f"{interval.left:.0f}"
+        return f"{left}-{interval.right:.0f}"
+
+    df_plot['target_bin_str'] = df_plot['target_bin'].apply(format_interval)
+
+    # Determine group order
+    if group_order is not None:
+        available_groups = set(df_plot[group_col].unique())
+        sorted_groups = [g for g in group_order if g in available_groups][:ceiling_count]
+    else:
+        group_counts = df_plot[group_col].value_counts()
+        sorted_groups = sorted(group_counts.index)[:ceiling_count]
+
+    # Filter to top groups
+    df_plot_filtered = df_plot[df_plot[group_col].isin(sorted_groups)].copy()
+
+    # Count samples per group × bin
+    group_bin_counts = df_plot_filtered.groupby([group_col, 'target_bin_str']).size().reset_index(name='count')
+    valid_bins = group_bin_counts[group_bin_counts['count'] >= min_samples]
+
+    # Keep only valid bins
+    df_plot_filtered = df_plot_filtered.merge(valid_bins[[group_col, 'target_bin_str']],
+                                              on=[group_col, 'target_bin_str'], how='inner')
+
+    # Get visible bins and groups
+    all_bins = df_plot['target_bin_str'].cat.categories
+    visible_bins = [b for b in all_bins if b in df_plot_filtered['target_bin_str'].values]
+    visible_groups = [str(g) for g in sorted_groups if str(g) in df_plot_filtered[group_col].astype(str).values]
+
+    df_plot_filtered[group_col] = pd.Categorical(df_plot_filtered[group_col].astype(str),
+                                                 categories=visible_groups, ordered=True)
+
+    # Determine subplot layout
+    n_bins = len(visible_bins)
+    if ncols is None:
+        ncols = min(4, n_bins)  # Max 4 columns
+    nrows = int(np.ceil(n_bins / ncols))
+
+    if figsize is None:
+        figsize = (4 * ncols, 3 * nrows)
+
+    # Create subplots
+    fig, axes = plt.subplots(nrows, ncols, figsize=figsize, dpi=dpi,
+                            squeeze=False, sharex=True, sharey=True)
+    axes = axes.flatten()
+
+    # Color palette for groups
+    if custom_palette is None:
+        color_palette = sns.color_palette(cmap, len(visible_groups))
+    else:
+        color_palette = custom_palette
+
+    # Create color mapping
+    group_colors = {group: color_palette[i] for i, group in enumerate(visible_groups)}
+
+    # Plot each target bin in separate subplot
+    for bin_idx, bin_str in enumerate(visible_bins):
+        ax = axes[bin_idx]
+        bin_data = df_plot_filtered[df_plot_filtered['target_bin_str'] == bin_str]
+
+        if not bin_data.empty:
+            sns.boxplot(
+                data=bin_data,
+                x=group_col,
+                y=predictor_col,
+                hue=group_col,
+                ax=ax,
+                palette=color_palette,
+                fliersize=0,
+                order=visible_groups,
+                hue_order=visible_groups,
+                legend=False
+            )
+
+            # Add sample counts
+            if show_sample_counts:
+                y_max = bin_data[predictor_col].max()
+                for group_idx, group_str in enumerate(visible_groups):
+                    n_samples = (bin_data[group_col] == group_str).sum()
+                    if n_samples >= min_samples:
+                        ax.text(group_idx, y_max + .02, f'n={n_samples}',
+                               ha='center', va='bottom',
+                               fontsize=fontsize_sample_counts, rotation=90)
+
+            # Add total count for this bin at top right corner
+            total_bin_count = len(bin_data)
+            ax.text(0.5, 0.05, f"n={total_bin_count}",
+                   transform=ax.transAxes,
+                   va="top", ha="center",
+                   fontsize=fontsize_sample_counts)
+
+        # Formatting
+        ax.set_title("")  # No title
+
+        # X-label shows the target bin value
+        ax.set_xlabel(f"{bin_str}", fontsize=fontsize_axis_labels)
+
+        # Y-label only on leftmost column
+        ax.set_ylabel(predictor_label if bin_idx % ncols == 0 else "",
+                     fontsize=fontsize_axis_labels)
+
+        ax.grid(axis='y', alpha=0.7, linestyle="dashed", color="lightgrey")
+        ax.axhline(y=0, linestyle="solid", color="lightgrey", linewidth=1, zorder=0)
+
+        # Remove x-tick labels
+        ax.set_xticklabels([])
+        ax.tick_params(axis='x', which='both', length=0)  # Remove tick marks
+
+        ax.tick_params(axis='y', labelsize=fontsize_ytick)
+
+        if ylim is not None:
+            ax.set_ylim(ylim)
+
+    # Hide empty subplots
+    for idx in range(n_bins, len(axes)):
+        axes[idx].set_visible(False)
+
+    # Overall title
+    if title:
+        fig.suptitle(title, fontsize=fontsize_title, y=0.995)
+
+    fig.supxlabel(f"{target_label}", fontsize=fontsize_axis_labels, y=-0.03)
+
+    # Create shared legend
+    legend_elements = [Patch(facecolor=group_colors[group], label=group)
+                      for group in visible_groups]
+
+    if legend_ncols is None:
+        legend_ncols = len(visible_groups)
+
+    # Reorder legend elements to fill by row then column (row-major)
+    # Matplotlib fills by column, so we need to transpose the layout
+    n_items = len(legend_elements)
+    n_rows = int(np.ceil(n_items / legend_ncols))
+    reordered_elements = [None] * n_items
+    for i, elem in enumerate(legend_elements):
+        row = i // legend_ncols
+        col = i % legend_ncols
+        new_idx = col * n_rows + row
+        reordered_elements[new_idx] = elem
+
+    fig.legend(handles=reordered_elements,
+              title=group_label,
+              loc=legend_loc,
+              bbox_to_anchor=legend_bbox_to_anchor,
+              ncol=legend_ncols,
+              frameon=True,
+              fontsize=fontsize_legend,
+              title_fontsize=fontsize_legend)
+
+    if title:
+        fig.subplots_adjust(top=0.96)
+    fig.subplots_adjust(bottom=0.12)  # Make room for legend
+
+    return fig
+
+def plot_faceted_by_target_bins_legend(
+    df, predictor_col, target_col, group_col,
+    predictor_label="Predictor", target_label="Target", group_label="Group",
+    target_bins=10, ceiling_count=8, show_sample_counts=False,
+    min_samples=1,
+    title=None, cmap='viridis', custom_palette=None, ylim=None,
+    figsize=None, dpi=600, ncols=None,
+    legend_loc='lower center', legend_ncols=None, legend_bbox_to_anchor=(0.5, -0.15),
+    show_trend_line=False, trend_line_color='black', trend_line_width=2,
+    trend_line_style='-', trend_line_marker='o', trend_line_markersize=4,
+    fontsize_title=12, fontsize_axis_labels=10, fontsize_ytick=9,
+    fontsize_legend=10, fontsize_sample_counts=8
+):
+    """
+    FACETED VERSION with shared legend: Create separate subplot for each target bin.
+    Uses color coding with a shared legend instead of x-tick labels.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Input data
+    predictor_col : str
+        Column name for y-axis (prediction error)
+    target_col : str
+        Column name for binning (PSI)
+    group_col : str
+        Column name for grouping (e.g., CpG enrichment)
+    predictor_label : str
+        Y-axis label
+    target_label : str
+        Label for target variable (used in subplot x-labels)
+    group_label : str
+        Label for groups (used in legend title)
+    target_bins : int or array-like
+        Number of bins or bin edges for target variable
+    ceiling_count : int
+        Maximum number of groups to display
+    show_sample_counts : bool
+        Whether to show sample counts above boxes
+    min_samples : int
+        Minimum samples required per bin/group combination
+    title : str, optional
+        Overall figure title
+    cmap : str
+        Colormap name
+    custom_palette : list, optional
+        Custom color palette
+    ylim : tuple, optional
+        Y-axis limits
+    figsize : tuple, optional
+        Figure size (width, height)
+    dpi : int
+        Figure DPI
+    ncols : int, optional
+        Number of columns for subplot grid (default: 4)
+    legend_loc : str
+        Legend location
+    legend_ncols : int, optional
+        Number of legend columns (default: number of groups)
+    legend_bbox_to_anchor : tuple
+        Legend bbox anchor position
+    fontsize_* : int
+        Font sizes for various elements
+
+    Returns
+    -------
+    fig : matplotlib.figure.Figure
+        The generated figure
+    """
+
+    df_plot = df.copy()
+
+    # Bin target variable
+    if isinstance(target_bins, int):
+        df_plot['target_bin'] = pd.cut(df_plot[target_col], bins=target_bins, include_lowest=True)
+    else:
+        df_plot['target_bin'] = pd.cut(df_plot[target_col], bins=target_bins, include_lowest=True)
+
+    # Convert intervals to readable strings
+    def format_interval(interval):
+        if pd.isna(interval):
+            return 'NaN'
+        left = 0 if round(interval.left) == 0 else f"{interval.left:.0f}"
+        return f"{left}-{interval.right:.0f}"
+
+    df_plot['target_bin_str'] = df_plot['target_bin'].apply(format_interval)
+
+    # Limit number of groups
+    group_counts = df_plot[group_col].value_counts()
+    top_groups = group_counts.index[:ceiling_count]
+    df_plot_filtered = df_plot[df_plot[group_col].isin(top_groups)].copy()
+
+    # Count samples per group × bin
+    group_bin_counts = df_plot_filtered.groupby([group_col, 'target_bin_str']).size().reset_index(name='count')
+    valid_bins = group_bin_counts[group_bin_counts['count'] >= min_samples]
+
+    # Keep only valid bins
+    df_plot_filtered = df_plot_filtered.merge(valid_bins[[group_col, 'target_bin_str']],
+                                              on=[group_col, 'target_bin_str'], how='inner')
+
+    # Get visible bins and groups
+    visible_bins = sorted([b for b in df_plot_filtered['target_bin_str'].unique()])
+    visible_groups = sorted([str(g) for g in df_plot_filtered[group_col].unique()])
+
+    df_plot_filtered[group_col] = pd.Categorical(df_plot_filtered[group_col].astype(str),
+                                                 categories=visible_groups, ordered=True)
+
+    # Determine subplot layout
+    n_bins = len(visible_bins)
+    if ncols is None:
+        ncols = min(4, n_bins)  # Max 4 columns
+    nrows = int(np.ceil(n_bins / ncols))
+
+    if figsize is None:
+        figsize = (4 * ncols, 3 * nrows)
+
+    # Create subplots
+    fig, axes = plt.subplots(nrows, ncols, figsize=figsize, dpi=dpi,
+                            squeeze=False, sharex=True, sharey=True)
+    axes = axes.flatten()
+
+    # Color palette for groups
+    if custom_palette is None:
+        color_palette = sns.color_palette(cmap, len(visible_groups))
+    else:
+        color_palette = custom_palette
+
+    # Create color mapping
+    group_colors = {group: color_palette[i] for i, group in enumerate(visible_groups)}
+
+    # Plot each PSI bin in separate subplot
+    for bin_idx, bin_str in enumerate(visible_bins):
+        ax = axes[bin_idx]
+        bin_data = df_plot_filtered[df_plot_filtered['target_bin_str'] == bin_str]
+
+        if not bin_data.empty:
+            sns.boxplot(
+                data=bin_data,
+                x=group_col,
+                y=predictor_col,
+                hue=group_col,
+                ax=ax,
+                palette=color_palette,
+                fliersize=0,
+                order=visible_groups,
+                hue_order=visible_groups,
+                legend=False
+            )
+
+            # Add trend line
+            if show_trend_line:
+                x_values = []
+                y_values = []
+                
+                # Collect all data points with their group positions
+                for group_idx, group_str in enumerate(visible_groups):
+                    group_data = bin_data[bin_data[group_col] == group_str][predictor_col]
+                    if len(group_data) > 0:
+                        x_values.extend([group_idx] * len(group_data))
+                        y_values.extend(group_data.values)
+                        
+                # Fit linear regression
+                if len(x_values) > 1:
+                    coeffs = np.polyfit(x_values, y_values, 1)
+                    poly = np.poly1d(coeffs)
+                    
+                    # Plot regression line across the range
+                    x_range = np.array([0, len(visible_groups) - 1])
+                    y_fit = poly(x_range)
+                    ax.plot(x_range, y_fit,
+                            color=trend_line_color,
+                            linewidth=trend_line_width,
+                            linestyle=trend_line_style,
+                            zorder=10
+                    )
+
+            # Add sample counts
+            if show_sample_counts:
+                y_max = bin_data[predictor_col].max()
+                for group_idx, group_str in enumerate(visible_groups):
+                    n_samples = (bin_data[group_col] == group_str).sum()
+                    if n_samples >= min_samples:
+                        ax.text(group_idx, y_max + .02, f'n={n_samples}',
+                               ha='center', va='bottom',
+                               fontsize=fontsize_sample_counts, rotation=90)
+
+        # Add total count for this bin at top right corner
+        total_bin_count = len(bin_data)
+        ax.text(0.5, 0.05, f"n={total_bin_count}",
+                transform=ax.transAxes,
+                va="top", ha="center",
+                fontsize=fontsize_sample_counts
+        )
+
+        # Formatting
+        ax.set_title("")  # No title
+
+        # X-label shows the target bin value
+        ax.set_xlabel(f"{bin_str}", fontsize=fontsize_axis_labels)
+
+        # Y-label only on leftmost column
+        ax.set_ylabel(predictor_label if bin_idx % ncols == 0 else "",
+                     fontsize=fontsize_axis_labels)
+
+        ax.grid(axis='y', alpha=0.7, linestyle="dashed", color="lightgrey")
+        ax.axhline(y=0, linestyle="solid", color="lightgrey", linewidth=1, zorder=0)
+
+        # Remove x-tick labels
+        ax.set_xticklabels([])
+        ax.tick_params(axis='x', which='both', length=0)  # Remove tick marks
+
+        ax.tick_params(axis='y', labelsize=fontsize_ytick)
+
+        if ylim is not None:
+            ax.set_ylim(ylim)
+
+    # Hide empty subplots
+    for idx in range(n_bins, len(axes)):
+        axes[idx].set_visible(False)
+
+    # Overall title
+    if title:
+        fig.suptitle(title, fontsize=fontsize_title, y=0.995)
+
+    # Create shared legend
+    legend_elements = [Patch(facecolor=group_colors[group], label=group)
+                      for group in visible_groups]
+
+    if legend_ncols is None:
+        legend_ncols = len(visible_groups)
+        
+    n_items = len(legend_elements)
+    n_rows = int(np.ceil(n_items / legend_ncols))
+    reordered_elements = [None] * n_items
+    for i, elem in enumerate(legend_elements):
+        row = i // legend_ncols
+        col = i % legend_ncols
+        new_idx = col * n_rows + row
+        reordered_elements[new_idx] = elem    
+    
+    fig.legend(handles=reordered_elements,
+              title=group_label,
+              loc=legend_loc,
+              bbox_to_anchor=legend_bbox_to_anchor,
+              ncol=legend_ncols,
+              frameon=True,
+              fontsize=fontsize_legend,
+              title_fontsize=fontsize_legend)
+    fig.supxlabel(f"{target_label}", fontsize=fontsize_axis_labels, y=-0.03)
+
+    if title:
+        fig.subplots_adjust(top=0.96)
+    fig.subplots_adjust(bottom=0.12)  # Make room for legend
+
+    return fig

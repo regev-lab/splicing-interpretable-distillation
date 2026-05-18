@@ -7,9 +7,10 @@
 ### Git LFS
 
 This repository uses Git Large File Storage (LFS) to store large datasets.  
-Make sure Git LFS is installed *before* cloning, or run `git lfs pull` after cloning to fetch the tracked files:
+Make sure Git LFS is installed *before* cloning following [this guide](https://docs.github.com/en/repositories/working-with-files/managing-large-files/installing-git-large-file-storage), or run `git lfs pull` after cloning to fetch the tracked files:
 
 ```bash
+# Install Git LFS from guide before running these commands
 git lfs install
 git clone git:github.com:/regev-lab/splicing-interpretable-distillation.git
 # or if already cloned
@@ -39,8 +40,10 @@ gunzip gencode.v49.primary_assembly.basic.annotation.gtf.gz
 # Ensembl GFF
 wget https://ftp.ensembl.org/pub/release-114/gff3/homo_sapiens/Homo_sapiens.GRCh38.114.gff3.gz
 gunzip Homo_sapiens.GRCh38.114.gff3.gz
-# Clone Illumina SpliceAI repository
+# Clone Illumina SpliceAI repository and install
 git clone git@github.com:/Illumina/SpliceAI.git
+cd SpliceAI
+python setup.py install
 ```
 
 ## Repository Structure
@@ -70,17 +73,19 @@ The `notebooks/` directory contains Jupyter notebooks for various analyses:
   - Baeza-Centurion et al. 2025: FAS exon 6 mutagenesis assay
   - Chong et al. 2019: MFASS assay
 
-- **`SpliceAI_CpG_Islands_Predictions.ipynb`**: Visualization of SpliceAI false positive predictions within CpG islands.
+- **`CpGMethylation_Analysis.ipynb`**: Analysis of CpG methylation and splicing in Pappalardi et al. 2019 DNMT1-inhibitor dataset.
 
 - **`EnsemblTranscript_CpGComposition.ipynb`**: Analysis of CpG dinucleotide composition (observed/expected ratios) in transcripts.
 
-- **`CpGMethylation_Analysis.ipynb`**: Analysis of CpG methylation and splicing in Pappalardi et al. 2019 DNMT1-inhibitor dataset.
-
 - **`Genomic_Stop_Codon_Analysis.ipynb`**: Analysis of splicing predictions for genomic exons with and without stop codons.
-  
+
+- **`MAPT_Splicing_Predictions.ipynb`**: Analysis of splicing predictions for MAPT exon 10 variants and their relationship to RNA secondary structure.
+
 - **`Plot_Variant_Scores.ipynb`**: Visualizations of splicing prediction scores for specific variants.
 
-- **`MAPT_Splicing_Predictions.ipynb`**: Analysis of splicing predictions for MAPT exon 10 variants and their relationship to RNA secondary structure stability.
+- **`Liao2023_StemLoop_Plots.ipynb`**: Analysis of splicing predictions for stem-loop-containing exons in Liao et al. 2023 dataset.
+
+- **`SpliceAI_CpG_Islands_Predictions.ipynb`**: Visualization of SpliceAI false positive predictions within CpG islands.
 
 - **`SpliceAI_Transcript_Variant_Scorer.ipynb`**: Visualizations of gene sequences scored with SpliceAI.
 
