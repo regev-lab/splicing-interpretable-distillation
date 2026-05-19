@@ -17,6 +17,13 @@ cd splicing-interpretable-distillation
 git lfs pull
 ```
 
+Alternatively, if you do not wish to install Git LFS, you can clone the repository as follows
+```bash
+git clone https://github.com/regev-lab/splicing-interpretable-distillation.git
+cd splicing-interpretable-distillation
+```
+and then manually download the first two files from [Github](https://github.com/regev-lab/splicing-interpretable-distillation/tree/main/data/methylation) into the `data/methylation/` folder. 
+
 ### Python Dependencies
 
 Install required Python packages:
