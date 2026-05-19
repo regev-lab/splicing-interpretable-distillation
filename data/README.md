@@ -9,6 +9,7 @@ All experimental datasets are publicly available from the listed sources and sub
 - `Chong_2019_SplicingPredictions.csv`: https://doi.org/10.1016/j.molcel.2018.10.037
 - `Kumar_2022_MAPT_SplicingPredictions.csv`: https://doi.org/10.7554/eLife.73888
 - `Liao_2023_SplicingPredictions.csv`: https://doi.org/10.1073/pnas.2221165120
+   - Note: Pre-processing scripts to obtain sequences and PSI measurements from raw files deposited on GEO are included under Liao_2023_Preprocessing  
 - `Liao_2023_StemLoop_Predictions.csv`: https://doi.org/10.1073/pnas.2221165120
 - `methylation/GPL21145_MethylationEPIC_15073387_v-1-0.csv.gz`: https://support.illumina.com/downloads/infinium-methylationepic-v1-0-product-files.html
 - `methylation/GSE135205_DNMT1_MV411_Epic_methylation_betas.txt.gz`: https://doi.org/10.1038/s43018-021-00249-x

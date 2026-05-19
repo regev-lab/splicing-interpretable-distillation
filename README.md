@@ -6,14 +6,14 @@
 
 ### Git LFS
 
-This repository uses Git Large File Storage (LFS) to store large datasets.  
-Make sure Git LFS is installed *before* cloning following [this guide](https://docs.github.com/en/repositories/working-with-files/managing-large-files/installing-git-large-file-storage), or run `git lfs pull` after cloning to fetch the tracked files:
+This repository uses Git Large File Storage (LFS) to store large datasets.
+First, install Git LFS by following [this guide](https://docs.github.com/en/repositories/working-with-files/managing-large-files/installing-git-large-file-storage). After installing Git LFS, perform the following steps:
 
 ```bash
-# Install Git LFS from guide before running these commands
+# Make sure you have installed Git LFS before running these commands
 git lfs install
 git clone git:github.com:/regev-lab/splicing-interpretable-distillation.git
-# or if already cloned
+cd splicing-interpretable-distillation
 git lfs pull
 ```
 
@@ -33,13 +33,10 @@ Download required reference files and tools into the `dependencies/` directory:
 cd dependencies
 # Reference Genome
 wget https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_49/GRCh38.p14.genome.fa.gz
-gunzip GRCh38.p14.genome.fa.gz
 # GENCODE GTF
 wget https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_49/gencode.v49.primary_assembly.basic.annotation.gtf.gz
-gunzip gencode.v49.primary_assembly.basic.annotation.gtf.gz
 # Ensembl GFF
 wget https://ftp.ensembl.org/pub/release-114/gff3/homo_sapiens/Homo_sapiens.GRCh38.114.gff3.gz
-gunzip Homo_sapiens.GRCh38.114.gff3.gz
 # Clone Illumina SpliceAI repository and install
 git clone git@github.com:/Illumina/SpliceAI.git
 cd SpliceAI
