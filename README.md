@@ -12,7 +12,7 @@ First, install Git LFS by following [this guide](https://docs.github.com/en/repo
 ```bash
 # Make sure you have installed Git LFS before running the following commands
 git lfs install
-git clone git:github.com:/regev-lab/splicing-interpretable-distillation.git
+git clone https://github.com/regev-lab/splicing-interpretable-distillation.git
 cd splicing-interpretable-distillation
 git lfs pull
 ```
@@ -38,7 +38,7 @@ wget https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_49/gencod
 # Ensembl GFF
 wget https://ftp.ensembl.org/pub/release-114/gff3/homo_sapiens/Homo_sapiens.GRCh38.114.gff3.gz
 # Clone Illumina SpliceAI repository and install
-git clone git@github.com:/Illumina/SpliceAI.git
+git clone https://github.com/Illumina/SpliceAI.git
 cd SpliceAI
 python setup.py install
 ```
