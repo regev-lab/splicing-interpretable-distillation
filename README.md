@@ -10,7 +10,7 @@ This repository uses Git Large File Storage (LFS) to store large datasets.
 First, install Git LFS by following [this guide](https://docs.github.com/en/repositories/working-with-files/managing-large-files/installing-git-large-file-storage). After installing Git LFS, perform the following steps:
 
 ```bash
-# Make sure you have installed Git LFS before running these commands
+# Make sure you have installed Git LFS before running the following commands
 git lfs install
 git clone git:github.com:/regev-lab/splicing-interpretable-distillation.git
 cd splicing-interpretable-distillation
