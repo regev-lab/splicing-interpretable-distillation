@@ -7,7 +7,7 @@
 ### Git LFS
 
 This repository uses Git Large File Storage (LFS) to store large datasets.
-First, install Git LFS by following [this guide](https://docs.github.com/en/repositories/working-with-files/managing-large-files/installing-git-large-file-storage). After installing Git LFS, perform the following steps:
+To obtain these files, install Git LFS by following [this guide](https://docs.github.com/en/repositories/working-with-files/managing-large-files/installing-git-large-file-storage). After installing Git LFS, perform the following steps:
 
 ```bash
 # Make sure you have installed Git LFS before running the following commands
@@ -68,11 +68,10 @@ notebooks/            # Analysis notebooks (see below)
 README.md
 ```
 
-## Analysis Notebooks
+## Distillation Framework
 
-The `distillation/` directory contains distilled model training code and Jupyter notebooks to interpret trained distilled models. We recommend running these notebooks on an NVIDIA GPU (estimated run time on a single A100: ~5 minutes vs. on CPU: ~hours).
-
-To run a hyperparameter search for the SpliceAI distilled model (we recommend using a GPU):
+The `distillation/` directory contains distilled model training code. We recommend running this code on an NVIDIA GPU (hyperparameter search takes approximately 1-2 days on 1x NVIDIA A100).
+To run a hyperparameter search for the SpliceAI distilled model:
 
 ```bash
 cd distillation
@@ -95,13 +94,17 @@ python3 hyperparameter_search.py \
 
 Use `--num_gpus_per_trial 0` to run on CPU only. Paths to `--train_csv` and `--test_csv` must be absolute.
 
+## Analysis Notebooks
+
+The `distillation/` also contains Jupyter notebooks to interpret trained distilled models. We recommend running the interpretation notebooks on an NVIDIA GPU (estimated run time on a single A100: ~5 minutes vs. on CPU: ~hours).
+
 - **`interpret_spliceai_distillation.ipynb`**: Visualization of distilled SpliceAI model (Figs. 1B-C, S4).
 
-- **`interpret_pangolin_distillation.ipynb`**: Visualization of distilled Pangolin models (Figs. S2).
+- **`interpret_pangolin_distillation.ipynb`**: Visualization of distilled Pangolin models (Fig. S2).
 
 - **`interpret_alphagenome_distillation.ipynb`**: Visualization of distilled AlphaGenome model (Fig. S3).
 
-The `notebooks/` directory contains Jupyter notebooks for various analyses:
+The `notebooks/` directory contains Jupyter notebooks for various analyses (these notebooks can be run on CPU):
 
 - **`Assay_Splicing_Predictions.ipynb`**: Analysis of splicing predictions on experimental splicing assays (Figs. 2A, 3A, 4A, S1, S6, S7, S9, S11A).
   - Liao et al. 2023: Synthetic sequence splicing assay
