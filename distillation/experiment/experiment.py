@@ -5,7 +5,6 @@ import os
 import pandas as pd
 import random
 from ray import tune
-from ray.train.torch import get_device
 import torch
 from typing import Tuple
 
@@ -104,7 +103,7 @@ class Experiment(tune.Trainable):
         if "device" in config:
             self.device = config["device"]
         else:
-            self.device = get_device()
+            self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         if not skip_dataset:
             print("Loading datasets")

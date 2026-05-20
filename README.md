@@ -24,12 +24,20 @@ cd splicing-interpretable-distillation
 ```
 and then manually download the first two files from [here](https://github.com/regev-lab/splicing-interpretable-distillation/tree/main/data/methylation) into the `data/methylation/` folder and the `distillation_train.csv.gz` file from [here](https://github.com/regev-lab/splicing-interpretable-distillation/tree/main/distillation/data) into the `distillation/data/` folder.
 
-### Python Dependencies
+### Python Environment and Dependencies
 
-Install required Python packages:
+We recommend creating a virtual Python environment by following these steps:
 
 ```bash
+python3 -m venv venv
+source venv/bin/activate
 pip install -r requirements.txt
+
+# To launch Jupyter:
+jupyter lab
+
+# Deactivate the environment when done:
+deactivate
 ```
 
 ### File Dependencies
@@ -62,36 +70,59 @@ README.md
 
 ## Analysis Notebooks
 
-The `distillation/` directory contains distilled model training code and Jupyter notebooks to interpret trained distilled models:
+The `distillation/` directory contains distilled model training code and Jupyter notebooks to interpret trained distilled models. We recommend running these notebooks on an NVIDIA GPU (estimated run time on a single A100: ~5 minutes vs. on CPU: ~hours).
 
-- **`interpret_spliceai_distillation.ipynb`**: Visualization of distilled SpliceAI model.
+To run a hyperparameter search for the SpliceAI distilled model (we recommend using a GPU):
 
-- **`interpret_pangolin_distillation.ipynb`**: Visualization of distilled Pangolin models.
+```bash
+cd distillation
+python3 hyperparameter_search.py \
+  --experiment_name spliceai_search \
+  --num_trials 50 \
+  --train_csv /path/to/distillation/data/distillation_train.csv.gz \
+  --train_fraction 0.9 \
+  --test_csv /path/to/distillation/data/distillation_test.csv.gz \
+  --sequence_column random_exon_flanking_25nt \
+  --target_column spliceai_avg \
+  --data_type sequence \
+  --model_architecture conv1d_nbm \
+  --loss kl_divergence_logits \
+  --num_cpus 8 \
+  --num_cpus_per_trial 2 \
+  --num_gpus_per_trial 1 \
+  --result_dir ~/ray_results
+```
 
-- **`interpret_alphagenome_distillation.ipynb`**: Visualization of distilled AlphaGenome model.
+Use `--num_gpus_per_trial 0` to run on CPU only. Paths to `--train_csv` and `--test_csv` must be absolute.
+
+- **`interpret_spliceai_distillation.ipynb`**: Visualization of distilled SpliceAI model (Figs. 1B-C, S4).
+
+- **`interpret_pangolin_distillation.ipynb`**: Visualization of distilled Pangolin models (Figs. S2).
+
+- **`interpret_alphagenome_distillation.ipynb`**: Visualization of distilled AlphaGenome model (Fig. S3).
 
 The `notebooks/` directory contains Jupyter notebooks for various analyses:
 
-- **`Assay_Splicing_Predictions.ipynb`**: Analysis of splicing predictions on experimental splicing assays:
+- **`Assay_Splicing_Predictions.ipynb`**: Analysis of splicing predictions on experimental splicing assays (Figs. 2A, 3A, 4A, S1, S6, S7, S9, S11A).
   - Liao et al. 2023: Synthetic sequence splicing assay
   - Baeza-Centurion et al. 2025: FAS exon 6 mutagenesis assay
   - Chong et al. 2019: MFASS assay
 
-- **`CpGMethylation_Analysis.ipynb`**: Analysis of CpG methylation and splicing in Pappalardi et al. 2019 DNMT1-inhibitor dataset.
+- **`CpGMethylation_Analysis.ipynb`**: Analysis of CpG methylation and splicing in Pappalardi et al. 2019 DNMT1-inhibitor dataset (Fig. S5).
 
-- **`EnsemblTranscript_CpGComposition.ipynb`**: Analysis of CpG dinucleotide composition (observed/expected ratios) in transcripts.
+- **`EnsemblTranscript_CpGComposition.ipynb`**: Analysis of CpG dinucleotide composition (observed/expected ratios) in transcripts (Fig. 2D).
 
-- **`Genomic_Stop_Codon_Analysis.ipynb`**: Analysis of splicing predictions for genomic exons with and without stop codons.
+- **`Genomic_Stop_Codon_Analysis.ipynb`**: Analysis of splicing predictions for genomic exons with and without stop codons (Figs. 3B, S10).
 
-- **`MAPT_Splicing_Predictions.ipynb`**: Analysis of splicing predictions for MAPT exon 10 variants and their relationship to RNA secondary structure.
+- **`MAPT_Splicing_Predictions.ipynb`**: Analysis of splicing predictions for MAPT exon 10 variants and their relationship to RNA secondary structure (Figs. 4B, S11B).
 
-- **`Plot_Variant_Scores.ipynb`**: Visualizations of splicing prediction scores for specific variants.
+- **`Plot_Variant_Scores.ipynb`**: Visualizations of splicing prediction scores for specific variants (Figs. 3C, 4C).
 
-- **`Liao2023_StemLoop_Plots.ipynb`**: Analysis of splicing predictions for stem-loop-containing exons in Liao et al. 2023 dataset.
+- **`Liao2023_StemLoop_Plots.ipynb`**: Analysis of splicing predictions for stem-loop-containing exons in Liao et al. 2023 dataset (Fig. S12).
 
-- **`SpliceAI_CpG_Islands_Predictions.ipynb`**: Visualization of SpliceAI false positive predictions within CpG islands.
+- **`SpliceAI_CpG_Islands_Predictions.ipynb`**: Visualization of SpliceAI false positive predictions within CpG islands (Fig. 2B).
 
-- **`SpliceAI_Transcript_Variant_Scorer.ipynb`**: Visualizations of gene sequences scored with SpliceAI.
+- **`SpliceAI_Transcript_Variant_Scorer.ipynb`**: Visualizations of gene sequences scored with SpliceAI (Figs. 2C, S8).
 
 
 ## Citation
